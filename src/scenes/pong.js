@@ -26,9 +26,9 @@ let img_racchetta;
 let img_pallina;
 
 function preload(s) {
-    img_sfondo = PP.assets.immage.load(s, "assets/sfondo.png");
-    img_racchetta = PP.assets.immage.load(s, "assets/racchetta.png");
-    img_pallina = PP.assets.immage.load(s, "assets/pallina.png");
+    img_sfondo = PP.assets.image.load(s, "assets/sfondo.png");
+    img_racchetta = PP.assets.image.load(s, "assets/racchetta.png");
+    img_pallina = PP.assets.image.load(s, "assets/pallina.png");
 }
 
 function create(s) {
