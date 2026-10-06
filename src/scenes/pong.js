@@ -3,6 +3,7 @@ const L_RACCHETTA = 20;
 const A_RACCHETTA = 120;
 const L_PALLINA= 24;
 const MARGINE = 40;
+const VEL_RACCHETTA = 8;
 
 const TASTO_SU_SX = PP.key_codes.W;
 const TASTO_GIU_SX = PP.key_codes.S;
@@ -35,16 +36,18 @@ function create(s) {
     PP.assets.image.add(s, img_sfondo, 0, 0, 0, 0);
 
     racchetta_sx = PP.assets.image.add(s, img_racchetta, MARGINE, ALTEZZA / 2, 0.5, 0.5);
-    racchetta_dx = PP.assets.image.add(s, img_racchetta, MARGINE, ALTEZZA / 2, 0.5, 0.5);
+    racchetta_dx = PP.assets.image.add(s, img_racchetta, LARGHEZZA - MARGINE, ALTEZZA / 2, 0.5, 0.5);
 
     racchetta_dx.geometry.flip_x = true;
 
     pallina = PP.assets.image.add(s, img_pallina, LARGHEZZA / 2, ALTEZZA / 2, 0.5, 0.5);
 
-    ///racchetta_sx = PP.shapes.rectangle_add(s, MARGINE, ALTEZZA / 2, L_RACCHETTA, BIANCO, 1);
-    ///racchetta_dx = PP.shapes.rectangle_add(s, LARGHEZZA - MARGINE, ALTEZZA / 2, L_RACCHETTA, BIANCO, 1);
-    ///pallina = PP.shapes.rectangle_add(s, LARGHEZZA / 2, ALTEZZA / 2, L_PALLINA, BIANCO, 1);
-    ///testo_punti = PP.shapes.text.style_add(s, LARGHEZZA / 2, 30, "0-0", 48, "Arial", "bold", BIANCO, null, 0.5, 0);
+    punti_sx = 0;
+    punti_dx = 0;
+    vel_x = 6;
+    vel_y = 4;
+    testo_punti = PP.shapes.text_styled_add(s, LARGHEZZA / 2, 30,
+        "0-0", 48, "Arial", "bold", BIANCO, null, 0.5, 0);
 }
 
 function muovi_pallina() {
@@ -57,44 +60,47 @@ function muovi_pallina() {
     if (tocca(racchetta_sx) && vel_x < 0) {
         vel_x = - vel_x;
     }
-    if (pallina.geometry.y > LARGHEZZA) {
+    const meta = L_PALLINA / 2;
+    if (pallina.geometry.y >= ALTEZZA - meta && vel_y > 0) {
+        pallina.geometry.y = ALTEZZA - meta;
         vel_y = -vel_y;
     }
-    if (pallina.geometry.y < 0) {
+    if (pallina.geometry.y <= meta && vel_y < 0) {
+        pallina.geometry.y = meta;
         vel_y = -vel_y;
     }
 }
 
 function controlla_punto() {
-    let x = pallina.geometry.x;
-    if (x < 0 || x > LARGHEZZA) {
-    pallina.geometry.x = LARGHEZZA / 2;
-    pallina.geometry.y = ALTEZZA / 2;
-    }
-    if (x < 0) {
-        punti_dx += 1;
-    }
-    if (x > LARGHEZZA) {
-    punti_sx += 1;
+    const x = pallina.geometry.x;
+    if (x >= 0 && x <= LARGHEZZA) {
+        return;
     }
 
-    console.log("Punti sx: " + punti_sx + " - Punti dx: " + punti_dx);
+    if (x < 0) {
+        punti_dx += 1;
+    } else {
+        punti_sx += 1;
+    }
+
+    pallina.geometry.x = LARGHEZZA / 2;
+    pallina.geometry.y = ALTEZZA / 2;
+    vel_x = x < 0 ? -6 : 6;
+    vel_y = 4;
+    PP.shapes.text_change(testo_punti, punti_sx + "-" + punti_dx);
 }
 
 function muovi_racchetta(s, racchetta, tasto_su, tasto_giu) {
-    muovi_pallina();
     if (PP.interactive.kb.is_key_down(s, tasto_giu)) {
         racchetta.geometry.y += VEL_RACCHETTA;
     }
     if (PP.interactive.kb.is_key_down(s, tasto_su)) {
-        racchetta.geometry.y += VEL_RACCHETTA;
+        racchetta.geometry.y -= VEL_RACCHETTA;
     }
-    if (racchetta.geomegry,y < 0) {
-        racchetta.geometry.y = 0;
-    }
-    if (racchetta.geometry.y > ALTEZZA) {
-        racchetta.geometry.y = ALTEZZA;
-    }
+
+    const meta = A_RACCHETTA / 2;
+    racchetta.geometry.y = Math.max(meta,
+        Math.min(ALTEZZA - meta, racchetta.geometry.y));
 }
 
 function tocca(racchetta) {
@@ -103,7 +109,8 @@ function tocca(racchetta) {
     let sopra = racchetta.geometry.y - A_RACCHETTA / 2;
     let sotto = racchetta.geometry.y + A_RACCHETTA / 2;
 
-    let x = pallina.geomegry.x;
+    let meta = L_PALLINA / 2;
+    let x = pallina.geometry.x;
     let y = pallina.geometry.y;
 
     if (x + meta > sinistra && x - meta < destra && y + meta > sopra && y - meta < sotto) {
@@ -114,11 +121,10 @@ function tocca(racchetta) {
 } 
 
 function update(s) {
-    muovi_pallina();
-    controlla_punto();
     muovi_racchetta(s, racchetta_sx, TASTO_SU_SX, TASTO_GIU_SX);
     muovi_racchetta(s, racchetta_dx, TASTO_SU_DX, TASTO_GIU_DX);
-    PP.shapes.text_change(testo_punti, punti_sx + "-" + punti_dx);
+    muovi_pallina();
+    controlla_punto();
 }
 
 function destroy(s) {
